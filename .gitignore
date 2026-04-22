@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Tests / couverture
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+.DS_Store

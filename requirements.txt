@@ -1,0 +1,2 @@
+# Dépendances de production (vide pour ce projet simple)
+# Notre calculatrice n'a besoin que de la bibliothèque standard Python

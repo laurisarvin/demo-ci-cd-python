@@ -1,0 +1,30 @@
+# ─────────────────────────────────────────────────────────────────
+# WORKFLOW 1 : Hello World
+# Objectif : comprendre la structure minimale d'un workflow.
+# ─────────────────────────────────────────────────────────────────
+
+name: 01 - Hello World
+
+# Quand est-ce que ce workflow se déclenche ?
+on:
+  push:                    # à chaque push sur n'importe quelle branche
+  workflow_dispatch:       # déclenchement manuel depuis l'interface GitHub
+
+jobs:
+  saluer:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Afficher un message
+        run: echo "Hello, GitHub Actions !"
+
+      - name: Afficher la date et l'heure
+        run: date
+
+      - name: Afficher des infos système
+        run: |
+          echo "Système     : $(uname -a)"
+          echo "Utilisateur : $(whoami)"
+          echo "Dossier     : $(pwd)"
+          echo "Branche     : ${{ github.ref_name }}"
+          echo "Auteur      : ${{ github.actor }}"

@@ -1,0 +1,39 @@
+# ─────────────────────────────────────────────────────────────────
+# WORKFLOW 2 : Tests basiques Python
+# Objectif : lancer pytest automatiquement à chaque push/PR sur main.
+# ─────────────────────────────────────────────────────────────────
+
+name: 02 - Tests basiques Python
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tester:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Étape 1 : récupérer le code du dépôt
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      # Étape 2 : installer Python sur la VM
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'         # active le cache pip pour gagner du temps
+
+      # Étape 3 : installer les dépendances
+      - name: Installer les dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      # Étape 4 : lancer les tests
+      - name: Lancer les tests pytest
+        run: pytest tests/ -v

@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────────
+# WORKFLOW 4 : Matrix testing (multi-OS × multi-versions)
+# Objectif : tester le code sur plusieurs OS et plusieurs versions
+# de Python EN PARALLÈLE. Très impressionnant à montrer en démo !
+# ─────────────────────────────────────────────────────────────────
+
+name: 04 - Tests multi-versions (matrice)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  tests:
+    # Le nom est dynamique grâce aux variables de la matrice
+    name: Python ${{ matrix.python-version }} sur ${{ matrix.os }}
+
+    runs-on: ${{ matrix.os }}
+
+    # ─── La matrice : toutes les combinaisons OS × Python ─────
+    strategy:
+      fail-fast: false        # si une combinaison échoue, on continue les autres
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        python-version:
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
+        # On peut aussi exclure des combinaisons précises :
+        # exclude:
+        #   - os: windows-latest
+        #     python-version: '3.9'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Installer les dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Lancer les tests
+        run: pytest tests/ -v

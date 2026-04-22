@@ -1,0 +1,108 @@
+# ─────────────────────────────────────────────────────────────────
+# WORKFLOW 5 : Build et déploiement (CD)
+# Objectif : pipeline complet de Continuous Delivery —
+# tester → builder → déployer.
+# Se déclenche à la création d'un tag (ex : git tag v1.0.0 && git push --tags)
+# ─────────────────────────────────────────────────────────────────
+
+name: 05 - Build et déploiement
+
+on:
+  push:
+    tags:
+      - 'v*'                # uniquement sur les tags commençant par "v"
+  workflow_dispatch:        # ou déclenchement manuel
+
+jobs:
+
+  # ─── JOB 1 : tests de pré-déploiement ────────────────────────
+  tester:
+    name: Tests pré-déploiement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Installer les dépendances
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Lancer tous les tests
+        run: pytest tests/ -v
+
+  # ─── JOB 2 : construction du package ─────────────────────────
+  build:
+    name: Construction du package
+    needs: tester             # ne se lance que si les tests passent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Installer les outils de build
+        run: pip install build
+
+      - name: Construire le package (.whl + .tar.gz)
+        run: python -m build
+
+      - name: Lister le contenu de dist/
+        run: ls -la dist/
+
+      # On sauvegarde le résultat pour le job suivant
+      - name: Sauvegarder le build
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-python
+          path: dist/
+
+  # ─── JOB 3 : déploiement ─────────────────────────────────────
+  deployer:
+    name: Déploiement
+    needs: build
+    runs-on: ubuntu-latest
+
+    # Environnement protégé : on peut configurer une approbation
+    # manuelle obligatoire dans Settings → Environments
+    environment: production
+
+    # Permissions pour créer une release sur GitHub
+    permissions:
+      contents: write
+
+    steps:
+      - name: Récupérer le package construit
+        uses: actions/download-artifact@v4
+        with:
+          name: package-python
+          path: dist/
+
+      - name: Vérifier le contenu
+        run: ls -la dist/
+
+      # Crée automatiquement une Release GitHub avec le package en pièce jointe
+      - name: Créer la release GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ─── EXEMPLE (commenté) : publication sur PyPI ──────────
+      # Pour l'activer :
+      # 1. Créer un compte sur https://pypi.org
+      # 2. Générer un token API
+      # 3. L'ajouter dans Settings → Secrets → PYPI_API_TOKEN
+      #
+      # - name: Publier sur PyPI
+      #   uses: pypa/gh-action-pypi-publish@release/v1
+      #   with:
+      #     password: ${{ secrets.PYPI_API_TOKEN }}
